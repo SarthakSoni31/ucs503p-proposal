@@ -1,0 +1,234 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{graphicx}
+\usepackage{xcolor}
+% -----------------------------------------------------
+% bvraghav-tiet-ucs503p-article.sty
+% -----------------------------------------------------
+% Variable: Lab Instructor
+\makeatletter \newcommand{\BvrSetLabInstructor}[1]{%
+  \gdef\Bvr@LabInstructor{#1}}
+% default
+\newcommand{\Bvr@LabInstructor}{Dr. Raghav %
+  B. Venkataramaiyer}
+% public accessor
+\newcommand{\BvrLabInstructorValue}{\Bvr@LabInstructor}
+\makeatother
+% Add subtitle
+\usepackage{titling}
+% -- Set title bold
+\pretitle{\begin{center}\bfseries\fontsize{18bp}{18bp}\selectfont}
+\makeatletter
+\newcommand{\BvrSubtitle}[1]{%
+  \posttitle{%
+    \par\end{center}
+    \begin{center}\large#1\end{center}
+    \vskip 0.5em}%
+}
+\makeatother
+% Hints in the section title(s)
+\newcommand{\BvrHint}[1]{%
+  {\normalfont\normalsize\itshape\hfill #1}}
+% -----------------------------------------------------
+\title{CodeSphere AI: An AI-Augmented Software Engineering Collaboration Platform}
+\BvrSetLabInstructor{Ms. Paramveer Sidhu}
+\BvrSubtitle{%
+  Project Proposal for UCS503P  \\
+  Submitted to: \BvrLabInstructorValue \\ \bfseries
+  Thapar Institute of Engineering and Technology%
+}
+\author{%
+  Sarthak Soni, 3C11%
+  \thanks{Roll No: \texttt{1024030061}, %
+    Email: \texttt{ssoni1\_be24\@thapar.edu}}
+  \and
+  Ayush Bansal, 3C11%
+  \thanks{Roll No: \texttt{1024030059}, %
+    Email: \texttt{abansal9\_be24\@thapar.edu}}%
+}
+\date{\today}
+\begin{document}
+\maketitle
+\section{Higher-order goal%
+  \BvrHint{\ldots secondary framing}}
+This project aims to improve software engineering productivity by
+reducing the time developers spend understanding unfamiliar
+codebases, triaging issues, and coordinating work across a team.
+While the underlying theme (AI-assisted developer tooling) is
+broad, the immediate engineering objective is to translate
+\emph{faster, better-informed engineering decisions} into a
+measurable, deployable software solution.
+\section{Time-to-value %
+\BvrHint{\ldots primary heuristic}}
+\begin{itemize}[leftmargin=0.7cm]
+    \item We will deliver meaningful increments quickly by prototyping the core repository-insight workflow and validating it against a real open-source repository within a short iteration window.
+    \item We will prioritize fast feedback over perfection by using weekly iterations (and targeting CI-backed automation early) to reduce release friction.
+    \item Success is defined by what can be delivered and measured in the first iteration, then improved based on user feedback.
+\end{itemize}
+\section{Problem Statement}
+Third-year CS teams and early-career developers routinely lose time
+on tasks that are procedural rather than creative: understanding
+what a codebase does, finding the right file/module for a bug,
+writing consistent documentation, and tracking who is doing what.
+Common pain points include:
+\begin{itemize}[leftmargin=0.7cm]
+    \item \textbf{Onboarding friction:} new contributors take long to understand project structure and module responsibilities.
+    \item \textbf{Fragmented task tracking:} tasks/issues live separately from the code, so context is repeatedly re-explained.
+    \item \textbf{Manual, inconsistent code review:} reviewers spend time on style/documentation nits instead of logic and design.
+    \item \textbf{Poor visibility:} team leads lack a single view of project health (open issues, stale PRs, module ownership).
+\end{itemize}
+\textbf{Why this matters now (contextual relevance):} Generative and
+retrieval-based AI models are mature and cheap enough to embed
+directly into everyday developer workflows; a lightweight
+integration layer can meaningfully cut down repetitive engineering
+overhead even for small teams.
+\section{Proposed Solution %
+\BvrHint{\ldots Software Proposition}}
+\subsection{Overview}
+Build a \textbf{web-based} ``CodeSphere AI'' dashboard, backed by a
+\textbf{GitHub App/webhook bot}, that adds AI-assisted codebase
+understanding on top of GitHub rather than replacing GitHub's own
+project-management features. We deliberately do \emph{not} build a
+custom Kanban/task board -- GitHub Projects already covers that --
+and instead surface GitHub's existing issues in our dashboard with
+an AI layer on top. Components:
+\begin{itemize}[leftmargin=0.7cm]
+    \item \textbf{Repository connector:} link a GitHub repository via OAuth (read-only) and index its structure, commits, and open issues.
+    \item \textbf{AI codebase assistant (website):} chat interface that answers questions about the codebase (``where is X handled?'', ``summarize this module'') using retrieval over indexed source files, with citations to file/line.
+    \item \textbf{Auto-triage bot (GitHub App/webhook):} on every new issue/PR, the bot posts a generated summary and a suggested label as a comment directly on GitHub -- this is the feature GitHub does not provide natively.
+    \item \textbf{Team dashboard (website):} read-only view of GitHub issues/PRs enriched with staleness alerts and module ownership, pulled live from the GitHub API (not a separate board).
+\end{itemize}
+\subsection{Core workflow}
+\begin{enumerate}[leftmargin=0.7cm]
+    \item Team lead connects a GitHub repository; system indexes files, commit history, and open issues.
+    \item Contributor asks the AI assistant a question about the codebase (on the website) and receives an answer grounded in retrieved source snippets, with file/line references.
+    \item When a new issue/PR is opened on GitHub, the webhook bot auto-comments with a summary and suggested label within seconds.
+    \item Team lead views the dashboard for backlog health, stale items, and module ownership, sourced live from GitHub -- no data duplicated into a separate board.
+\end{enumerate}
+\subsection{Operational constraints for an educational, third-year setting}
+\begin{itemize}[leftmargin=0.7cm]
+    \item Keep the solution usable with a single GitHub OAuth connection and no heavyweight infrastructure.
+    \item Avoid dependence on training custom ML models; focus on retrieval, orchestration, and workflow correctness using existing LLM APIs.
+    \item Design for deployability using common web hosting and managed databases.
+\end{itemize}
+\section{Solution Approach %
+\BvrHint{\ldots Engineering focus}}
+This is an engineering course project, so we focus on scalable
+integration, retrieval, and workflow aspects rather than novel
+model research.
+\subsection{Codebase understanding %
+\BvrHint{\ldots non-research}}
+Code intelligence will be retrieval-based, not model-training-based:
+\begin{itemize}[leftmargin=0.7cm]
+    \item Chunk source files by function/class boundaries and generate embeddings using an existing embedding API.
+    \item Store embeddings in a vector index; retrieve top-\(k\) relevant chunks for a given question.
+    \item Pass retrieved chunks plus the question to an LLM API to generate a grounded answer with citations to file paths; never claim state-of-the-art accuracy.
+\end{itemize}
+\subsection{Web architecture %
+\BvrHint{\ldots web-based solution}}
+Two cooperating pieces, sharing one backend and database:
+\begin{itemize}[leftmargin=0.7cm]
+    \item \textbf{Website (frontend + backend API):} responsive UI for the chat assistant and dashboard; backend handles GitHub OAuth, repository indexing jobs, and LLM orchestration.
+    \item \textbf{GitHub App / webhook service:} a small service registered as a GitHub App on the repository; GitHub pushes ``issue opened'' / ``PR opened'' events to it, it calls the same LLM orchestration layer, and posts the summary/label back to GitHub via the GitHub API.
+    \item \textbf{Database:} store users, repositories, indexed chunks/embeddings, and generated summaries (issues/tasks themselves stay in GitHub -- we do not duplicate that data).
+\end{itemize}
+\subsection{CI/CD and fast delivery enabler}
+CI/CD will be used to:
+\begin{itemize}[leftmargin=0.7cm]
+    \item Automatically build and run tests on every change.
+    \item Produce repeatable deployment artifacts to staging.
+    \item Enable safe and frequent releases of incremental features.
+\end{itemize}
+\section{Evaluation Criterion %
+\BvrHint{\ldots measurable and attributable}}
+We define success using measurable metrics tied to the core workflow.
+\subsection{Primary evaluation metric}
+\textbf{Answer grounding rate:} percentage of AI-assistant answers
+that correctly cite an existing, relevant file/line in the
+indexed repository.
+\begin{itemize}[leftmargin=0.7cm]
+    \item Target: $\ge$ 85\% grounding rate on a held-out set of 30 test questions during pilot.
+    \item Attribution: measured by comparing cited file references against a manually verified answer key.
+\end{itemize}
+\subsection{Secondary evaluation metrics}
+\begin{itemize}[leftmargin=0.7cm]
+    \item \textbf{Time-to-first-understanding:} time for a new contributor to locate the correct module for a sample task, with vs.\ without the assistant.
+    \item \textbf{Issue triage accuracy:} percentage of auto-generated labels/summaries accepted without edit by the contributor.
+    \item \textbf{Triage latency:} time between an issue being opened on GitHub and the bot posting its summary comment (target: under 30 seconds).
+    \item \textbf{Reliability:} availability of staging/production for login and repository indexing during business hours (e.g., $\ge$ 99\% uptime in pilot).
+\end{itemize}
+\subsection{Pilot validation plan %
+\BvrHint{\ldots high-level}}
+\begin{itemize}[leftmargin=0.7cm]
+    \item Recruit 2--3 small student project teams (5--8 contributors total) and index one real repository per team.
+    \item Compare onboarding/triage metrics before/after within the iteration window by logging baseline estimates via short interviews or manual timing.
+\end{itemize}
+\section{Scalability %
+\BvrHint{\ldots with foresight}}
+The proposition should scale in both theoretical and practical senses.
+\begin{enumerate}[leftmargin=0.7cm]
+    \item \textbf{Scalable (theoretically):} The system should support growth in repository size and number of concurrent teams by:
+    \begin{itemize}[leftmargin=0.7cm]
+        \item decoupling components (frontend/backend/indexing worker),
+        \item incremental re-indexing on new commits instead of full re-index,
+        \item using stateless API design and a dedicated vector index for retrieval.
+    \end{itemize}
+    \item \textbf{Operationally deployable (practically):} The system should run on common web hosting:
+    \begin{itemize}[leftmargin=0.7cm]
+        \item managed relational database plus a managed vector store,
+        \item containerized or platform-hosted deployment,
+        \item CI/CD pipeline for staging/production.
+    \end{itemize}
+\end{enumerate}
+\section{Engine availability heuristic}
+A mature set of ``engines'' (tooling/services) is available to implement this as a web-based project:
+\begin{itemize}[leftmargin=0.7cm]
+    \item GitHub API and OAuth for repository access and authentication.
+    \item Web framework for REST APIs and reactive pages.
+    \item Managed relational database plus a managed vector database for embeddings.
+    \item Existing LLM and embedding APIs for summarization, Q\&A, and retrieval.
+    \item Test framework for unit/integration tests.
+    \item CI runner and staging deployment target.
+\end{itemize}
+We will use these mature components to focus on workflow design, retrieval correctness, and measurement rather than inventing new infrastructure or training new models.
+\section{Project scope and deliverables %
+\BvrHint{\ldots iteration-friendly}}
+\subsection{Initial deliverable %
+\BvrHint{\ldots first iteration}}
+\begin{itemize}[leftmargin=0.7cm]
+    \item GitHub OAuth login + repository connection
+    \item Repository indexing pipeline (chunking + embeddings) for one repository
+    \item AI assistant chat with grounded, cited answers (website)
+    \item GitHub App/webhook bot that auto-comments a summary on newly opened issues
+    \item CI: build + backend unit tests + linting
+    \item CD to staging with a single command or pipeline job
+\end{itemize}
+\subsection{Subsequent deliverables}
+\begin{itemize}[leftmargin=0.7cm]
+    \item Suggested-label posting alongside the summary (not just summary)
+    \item Incremental re-indexing on new commits
+    \item Team dashboard: stale-issue alerts and module ownership, pulled live from the GitHub API
+    \item Multi-repository and multi-team support
+\end{itemize}
+\section{Risks and mitigations}
+\begin{itemize}[leftmargin=0.7cm]
+    \item \textbf{LLM cost/rate limits:} cache embeddings and answers; batch indexing jobs; set per-team usage quotas.
+    \item \textbf{Answer hallucination:} always require retrieved-chunk citations; show ``no confident answer'' when retrieval confidence is low rather than guessing.
+    \item \textbf{Repository access/privacy:} request minimal OAuth scopes; allow teams to disconnect and delete indexed data.
+    \item \textbf{Evaluation measurement ambiguity:} fix the test question set and grounding-verification process before development begins.
+    \item \textbf{Operational issues in pilot:} use staging early; ensure CI/CD produces repeatable deployments.
+\end{itemize}
+\section{Summary}
+This project proposes a deployable web platform, CodeSphere AI,
+that reduces onboarding and coordination overhead for student and
+early-career software teams by grounding an AI assistant in a
+team's own codebase and linking it to a lightweight task workflow.
+It meets the course criteria by emphasizing time-to-value through
+rapid iterations, implementing CI/CD to support frequent safe
+releases, and using measurable evaluation criteria (especially
+answer grounding rate). It remains focused on engineering
+integration, retrieval correctness, and scalability readiness
+rather than research-driven model novelty.
+\end{document}
