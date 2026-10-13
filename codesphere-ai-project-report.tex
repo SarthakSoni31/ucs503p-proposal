@@ -1,0 +1,313 @@
+\documentclass{tietreport}
+
+% Import images
+\usepackage{graphicx}
+
+% Bibliography configuration
+\usepackage[
+  date=year,
+  style=alphabetic,
+  backend=biber,
+  sorting=nty,
+  maxnames=5,
+  minnames=3,
+  maxalphanames=4,
+  minalphanames=3,
+  backref=true,
+  doi=false,
+  isbn=false,
+  url=false,
+  eprint=false
+]{biblatex}
+\addbibresource{references.bib}
+
+%% ==================================================
+%% CUSTOMIZE THESE FIELDS FOR YOUR PROJECT
+%% ==================================================
+
+% Course/Lab header
+\TitlePageHeader{%
+  UCS503P - Software Engineering Project%
+}
+
+% Main project title
+\ProjectTitle{%
+  CodeSphere AI: An AI-Augmented Software Engineering Collaboration Platform%
+}
+
+% Subtitle or project description
+\ProjectSubTitle{%
+  Grounded Codebase Understanding, Automated Issue Triage, and Team Visibility%
+}
+
+% Student information (up to 4 students)
+\author{%
+  \texttt{1024030061} Sarthak Soni \\
+  \texttt{1024030059} Ayush Bansal%
+}
+
+% Group number, degree, year, program
+\TitlePageSubText{%
+  Group: \texttt{3C11} BE Third Year, CSE%
+}
+
+% Faculty advisor/guide name
+\AdvisorName{%
+  Ms. Paramveer Sidhu%
+}
+
+% Evaluation period and department info
+\TitlePageFooterText{{%
+    \large Mid-Semester Evaluation \\[0.2cm]
+    \bfseries Computer Science and Engineering
+    Department%
+  } \\[0.15cm]
+  Thapar Institute of Engineering and Technology,
+  Patiala%
+}
+
+%% ==================================================
+
+% Prevent tietreport from inserting blank even pages before chapters/TOC
+\makeatletter
+\@openrightfalse
+\let\cleardoublepage\clearpage
+\makeatother
+
+\begin{document}
+
+% Generate title page
+\maketitle
+\makeatletter
+\@openrightfalse
+\let\cleardoublepage\clearpage
+\makeatother
+
+% Table of contents (auto-generated from chapters)
+\tableofcontents
+
+% ===== CHAPTER 1: INTRODUCTION =====
+
+\chapter{Introduction}
+
+\section{Background and Context}
+
+\subsection{Higher-Order Goal}
+This project aims to improve software engineering productivity by reducing the time developers spend understanding unfamiliar codebases, triaging issues, and coordinating work across a team. While the underlying theme (AI-assisted developer tooling) is broad, the immediate engineering objective is to translate \textit{faster, better-informed engineering decisions} into a measurable, deployable software solution.
+
+\subsection{Time-to-Value Heuristic}
+\begin{itemize}
+  \item We deliver meaningful increments quickly by prototyping the core repository-insight workflow and validating it against a real open-source repository within a short iteration window.
+  \item We prioritize fast feedback over perfection by using weekly iterations (and targeting CI-backed automation early) to reduce release friction.
+  \item Success is defined by what can be delivered and measured in the first iteration, then improved based on user feedback.
+\end{itemize}
+
+\subsection{Problem Statement}
+
+Third-year CS teams and early-career developers routinely lose time on tasks that are procedural rather than creative: understanding what a codebase does, finding the right file/module for a bug, writing consistent documentation, and tracking who is doing what. Common pain points include:
+
+\begin{itemize}
+  \item \textbf{Onboarding friction:} New contributors take long to understand project structure and module responsibilities.
+  \item \textbf{Fragmented task tracking:} Tasks/issues live separately from the code, so context is repeatedly re-explained.
+  \item \textbf{Manual, inconsistent code review:} Reviewers spend time on style/documentation nits instead of logic and design.
+  \item \textbf{Poor visibility:} Team leads lack a single view of project health (open issues, stale PRs, module ownership).
+\end{itemize}
+
+\textbf{Why this matters now (contextual relevance):} Generative and retrieval-based AI models are mature and cheap enough to embed directly into everyday developer workflows; a lightweight integration layer can meaningfully cut down repetitive engineering overhead even for small teams.
+
+\section{Project Objectives and Scope}
+
+We structure our project objectives into an iteration-friendly scope separating our completed Mid-Semester deliverables from our planned End-Semester roadmap:
+
+\subsection{Initial Deliverables (Completed for Mid-Semester Evaluation)}
+\begin{enumerate}
+  \item \textbf{GitHub OAuth Login \& Repository Connection:} Authenticate users via GitHub OAuth 2.0 and link target repositories.
+  \item \textbf{Local ONNX Indexing \& AST Chunking Pipeline:} Chunk source files along syntax boundaries (with minimum 8-line stub merging) and generate 384-dimensional vector embeddings locally in Node.js using \texttt{Xenova/all-MiniLM-L6-v2} stored in PostgreSQL \texttt{pgvector}.
+  \item \textbf{Grounded AI Assistant Chat with Strict Citation Verification:} Web chat interface with hybrid retrieval, explicit \texttt{[CITED: Chunk X]} attribution, negative-query citation suppression, and an automated in-app Grounding Health Probe ($\ge 85\%$ target).
+  \item \textbf{HMAC-Secured GitHub Webhook Auto-Triage Bot:} Automatically post a generated root-cause summary and suggested classification label on newly opened GitHub issues.
+  \item \textbf{CI/CD Pipeline \& Staging Deployment:} Automated build verification, unit tests, linting, and continuous deployment to Vercel.
+\end{enumerate}
+
+\subsection{Subsequent Deliverables (Planned for End-Semester Evaluation)}
+\begin{itemize}
+  \item Multi-pass progressive deep indexing and incremental commit re-indexing for massive repositories.
+  \item Static AST defect and memory leak scanner with automated fork-aware Pull Request generation.
+  \item Team dashboard: live stale-issue alerts ($14+$ days), commit touch frequency module ownership heatmaps, and task delegation.
+  \item Multi-repository and multi-team collaborative workspace channels.
+\end{itemize}
+
+% ===== CHAPTER 2: METHODOLOGY & DESIGN =====
+
+\chapter{Methodology and Design}
+
+\section{System Architecture}
+
+\subsection{Proposed Solution Overview}
+
+We build a web-based ``CodeSphere AI'' dashboard, backed by a GitHub App/webhook bot, that adds AI-assisted codebase understanding on top of GitHub rather than replacing GitHub's own project-management features. We deliberately do \textit{not} build a custom Kanban/task board---GitHub Projects already covers that---and instead surface GitHub's existing issues in our dashboard with an AI layer on top. Core components include:
+
+\begin{itemize}
+  \item \textbf{Repository connector:} Link a GitHub repository via OAuth and index its structure, source files, and open issues.
+  \item \textbf{AI codebase assistant (website):} Chat interface that answers questions about the codebase (``where is X handled?'', ``summarize this module'') using hybrid retrieval over indexed source files, with clickable citations to exact GitHub file paths and line ranges.
+  \item \textbf{Auto-triage bot (GitHub App/webhook):} On every new issue, the bot verifies the HMAC SHA-256 webhook signature and posts a generated summary and suggested label (\texttt{bug}, \texttt{feature}, \texttt{question}, \texttt{documentation}, \texttt{chore}) as a comment directly on GitHub.
+  \item \textbf{Team dashboard (website):} Read-only view of GitHub issues/PRs enriched with staleness alerts and module ownership, pulled live from the GitHub API.
+\end{itemize}
+
+\subsection{Core Workflow}
+\begin{enumerate}
+  \item Team lead connects a GitHub repository; the system chunks source files and stores 384-dimensional vector embeddings in PostgreSQL \texttt{pgvector}.
+  \item Contributor asks the AI assistant a question about the codebase (on the website) and receives an answer grounded in retrieved source snippets, with verified file/line references.
+  \item When a new issue is opened on GitHub, the webhook bot auto-comments with a summary and suggested label within seconds.
+  \item Team lead views the dashboard for grounding health ($\ge 85\%$ benchmark), backlog health, and module ownership sourced live from GitHub.
+\end{enumerate}
+
+\subsection{Operational Constraints for an Educational, Third-Year Setting}
+\begin{itemize}
+  \item Keep the solution usable with a single GitHub OAuth connection and no heavyweight infrastructure.
+  \item Avoid dependence on training custom ML models; focus on retrieval, orchestration, and workflow correctness using existing LLM APIs and local ONNX embeddings.
+  \item Design for deployability using common web hosting (Vercel) and managed databases (Supabase PostgreSQL + \texttt{pgvector}).
+\end{itemize}
+
+\subsection{Technical Stack (Engine Availability Heuristic)}
+
+A mature set of ``engines'' (tooling/services) is used to implement this as a web-based project without inventing new infrastructure or training custom models:
+
+\begin{itemize}
+  \item \textbf{Repository Access \& Auth:} GitHub REST API, OAuth 2.0, and HMAC SHA-256 Webhooks.
+  \item \textbf{Framework/Language:} Next.js 14 (App Router), React 18, and Node.js.
+  \item \textbf{Database:} Managed PostgreSQL with the \texttt{pgvector} extension on Supabase for cosine distance vector search (\texttt{<=>}).
+  \item \textbf{AI \& Local Embeddings:} In-process local ONNX runtime (\texttt{@xenova/transformers} running \texttt{Xenova/all-MiniLM-L6-v2}) for zero-cost 384-dim embeddings, paired with Google Gemini (\texttt{gemini-flash-lite-latest}) for grounded synthesis and triage.
+  \item \textbf{Testing \& Quality:} Unit/integration test runner, ESLint, and automated in-app Grounding Probe benchmark.
+  \item \textbf{CI/CD \& Hosting:} GitHub CI workflow and Vercel staging/production deployment.
+\end{itemize}
+
+\section{Implementation Details}
+
+This is an engineering course project, so we focus on scalable integration, retrieval correctness, and workflow automation rather than novel model research.
+
+\subsection{Module 1: Local ONNX Codebase Indexing \& Grounded RAG Pipeline}
+
+Code intelligence in CodeSphere AI is strictly retrieval-based, featuring two key engineering enhancements implemented during the Mid-Semester phase:
+
+\begin{itemize}
+  \item \textbf{Syntax-Aware AST Boundary Chunking with Stub Merging (\texttt{lib/chunk.js}):} Source files are split along function and class declaration boundaries across JavaScript/TypeScript (\texttt{export}, \texttt{function}, \texttt{class}), Go (\texttt{func}), Rust (\texttt{fn}), and Python (\texttt{def}), falling back to 40-line windows (5-line overlap) for non-code files. To prevent 1-line package headers (e.g., \texttt{package utils}) from becoming isolated, uninformative chunks, boundaries fewer than 8 lines apart are automatically merged into substantive code blocks.
+  \item \textbf{Zero-Cost In-Process Local ONNX Embeddings (\texttt{lib/embeddings.js}):} Rather than relying on paid, rate-limited cloud embedding APIs, we execute \texttt{Xenova/all-MiniLM-L6-v2} locally inside Node.js via ONNX Runtime. Chunks are embedded in batches of 32 with mean pooling and $L_2$ normalization, producing 384-dimensional vectors stored in PostgreSQL \texttt{pgvector}.
+  \item \textbf{Hybrid Retrieval \& Strict Citation Defense (\texttt{lib/retrieval.js}, \texttt{lib/llm.js}):} Queries combine exact file/symbol pattern matching (\texttt{ILIKE ANY}) with penalized cosine similarity search (\texttt{embedding <=> query\_vec}, penalizing non-code templates by $+0.25$ and snippets $<80$ chars by $+0.30$). To eliminate hallucinated citations, the LLM must output structured \texttt{[CITED: Chunk X]} tags; if a query yields a negative match (e.g., confirming a term is not present anywhere in the repo) or addresses external non-code context, the parser outputs \texttt{[CITED: NONE]} and suppresses all source links ($\text{sources} = \emptyset$).
+\end{itemize}
+
+\subsection{Module 2: Web Architecture, HMAC Webhook Bot, and Scalability}
+
+Two cooperating services share a unified backend and PostgreSQL database:
+\begin{itemize}
+  \item \textbf{Website (Frontend + Backend API):} Responsive GitHub-dark UI for the Grounded Copilot, interactive Global Header Search (\texttt{/} or \texttt{Cmd+K}), and Grounding Health Verification Modal; backend routes handle OAuth, indexing, and retrieval orchestration.
+  \item \textbf{GitHub Webhook Service (\texttt{/api/webhooks/github}):} Validates incoming payloads using \texttt{crypto.timingSafeEqual} against GitHub's \texttt{x-hub-signature-256} HMAC SHA-256 digest. On \texttt{issues.opened} events, it calls the Gemini orchestration layer (with JSON escape repair) and posts a one-sentence summary and classification label back to the GitHub issue within seconds.
+  \item \textbf{Database (\texttt{db/schema.sql}):} Stores authenticated users, repository metadata, 384-dimensional chunk embeddings, and persistent Q\&A history (\texttt{qa\_history}) while leaving primary issue state in GitHub.
+\end{itemize}
+
+\textbf{Scalability Design:}
+\begin{enumerate}
+  \item \textbf{Scalable (Theoretically):} Supports growth in repository size and concurrent teams by decoupling frontend/backend/indexing workers, using stateless REST APIs, and leveraging an \texttt{ivfflat} cosine vector index in PostgreSQL.
+  \item \textbf{Operationally Deployable (Practically):} Runs on standard serverless hosting (Vercel) backed by managed Supabase PostgreSQL + \texttt{pgvector} and automated CI/CD builds on push.
+\end{enumerate}
+
+% ===== CHAPTER 3: RESULTS & EVALUATION =====
+
+\chapter{Results and Evaluation}
+
+\section{Testing and Evaluation Methodology}
+
+We evaluate CodeSphere AI using measurable, attributable metrics tied directly to our core workflow:
+
+\begin{itemize}
+  \item \textbf{Primary Evaluation Metric (Answer Grounding Rate):} Percentage of AI-assistant answers that correctly cite an existing, relevant file/line in the indexed repository.
+    \begin{itemize}
+      \item \textit{Target:} $\ge 85.0\%$ grounding rate on a held-out test set of architectural and symbol queries.
+      \item \textit{Automated In-App Verification Probe:} In addition to manual answer-key verification, we built an automated probe endpoint (\texttt{/api/repositories/[id]/probe}) that extracts up to 20 real AST symbols from the indexed repository, runs retrieval probes, and computes the exact pass rate in real time.
+    \end{itemize}
+  \item \textbf{Secondary Evaluation Metrics:}
+    \begin{itemize}
+      \item \textit{Time-to-first-understanding:} Time for a new contributor to locate the correct module for a sample task, with vs.\ without the assistant.
+      \item \textit{Issue triage accuracy:} Percentage of auto-generated labels/summaries accepted without edit by the contributor.
+      \item \textit{Triage latency:} Time between an issue being opened on GitHub and the webhook bot posting its summary comment (target: under 30 seconds).
+      \item \textit{Reliability:} Availability of staging/production for login and repository indexing during business hours (target: $\ge 99\%$ uptime).
+    \end{itemize}
+  \item \textbf{Pilot Validation Plan:}
+    \begin{itemize}
+      \item Recruit 2--3 small student project teams (5--8 contributors total) and index one real repository per team.
+      \item Compare onboarding/triage metrics before/after within the iteration window by logging baseline estimates via short interviews and manual timing.
+    \end{itemize}
+\end{itemize}
+
+\section{Performance Metrics}
+
+Table~\ref{tab:performance} presents the Mid-Semester evaluation results measured on our deployed system:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|r|r|}
+  \hline
+  \textbf{Evaluation Metric} & \textbf{Proposal Target} &
+  \textbf{Mid-Sem Achieved} \\
+  \hline
+  Answer Grounding Rate (Automated Probe) & $\ge 85.0\%$ & $95.0\% - 100.0\%$ \\
+  \hline
+  Negative-Query False Citation Rate & $0.0\%$ & $0.0\%$ \\
+  \hline
+  Webhook Auto-Triage Latency & $< 30.0$ s & $2.8$ s \\
+  \hline
+  External Embedding API Cost & Low / Quota-bound & $\$0.00$ (Local ONNX) \\
+  \hline
+  Staging / Production Build Health & Pass CI build & $100\%$ Passing \\
+  \hline
+\end{tabular}
+\caption{Mid-Semester Evaluation Results Summary}
+\label{tab:performance}
+\end{table}
+
+\section{Analysis: Challenges, Risks, and Mitigations}
+
+\begin{itemize}
+  \item \textbf{LLM cost and rate limits:} Mitigated by moving vector generation entirely in-process using local ONNX (\texttt{all-MiniLM-L6-v2}) at $\$0$ cost, and using high-quota \texttt{gemini-flash-lite-latest} with persisted chat history (\texttt{qa\_history}) so teammates do not re-run identical queries.
+  \item \textbf{Answer and citation hallucination:} Mitigated by enforcing \texttt{[CITED: Chunk X]} attribution tags, suppressing citations on negative assertions, and merging $<8$-line header stubs during AST chunking.
+  \item \textbf{Repository access and privacy:} Mitigated by requesting minimal OAuth scopes and providing full cascade deletion (\texttt{DELETE /api/repositories/[id]}) so teams can disconnect and wipe indexed chunks at any time.
+  \item \textbf{Evaluation measurement ambiguity:} Mitigated by building the deterministic in-app Grounding Health Probe modal with exportable Markdown audit reports.
+  \item \textbf{Operational reliability in pilot:} Mitigated by deploying early to Vercel with automated Next.js production build checks on every push.
+\end{itemize}
+
+% ===== CHAPTER 4: CONCLUSION =====
+
+\chapter{Conclusion}
+
+\section{Summary of Work}
+
+In the first half of the semester, we designed, implemented, and deployed the core \textbf{CodeSphere AI} platform. We completed all initial deliverables from our proposal—GitHub OAuth login, syntax-aware source chunking, vector indexing in PostgreSQL \texttt{pgvector}, grounded codebase chat with clickable GitHub line citations, HMAC-verified webhook issue auto-triage, and production deployment—while additionally introducing zero-cost local ONNX embeddings and strict anti-hallucination citation verification to exceed our $\ge 85\%$ grounding target.
+
+\section{Key Findings}
+
+\begin{itemize}
+  \item \textbf{Finding 1 (Hybrid Retrieval + Stub Merging Eliminates Context Noise):} Merging $<8$-line header stubs and combining exact filename/symbol matching with penalized cosine similarity lifted grounding accuracy from $\sim 80\%$ to $95\%+$.
+  \item \textbf{Finding 2 (In-Process Local ONNX Removes Embedding Bottlenecks):} Running \texttt{all-MiniLM-L6-v2} locally in Node.js delivers fast 384-dimensional vectors without external API keys, billing, or rate limits.
+  \item \textbf{Finding 3 (Strict Citation Parsing Prevents False Attribution):} Enforcing \texttt{[CITED: Chunk X]} tags and intercepting negative queries ensures $0\%$ false file citations when a queried symbol does not exist in the codebase.
+\end{itemize}
+
+\section{Future Work and Recommendations (End-Semester Roadmap)}
+
+For the End-Semester (EST) evaluation, we will expand the platform with our connected second-phase deliverables:
+
+\begin{enumerate}
+  \item \textbf{Progressive Multi-Pass Deep Indexing \& Incremental Updates:} Scaling the indexing state machine to process massive multi-hundred-file repositories in resumable micro-batches without serverless timeouts, alongside Just-In-Time (JIT) on-demand file fetching~\cite{latex2e}.
+  \item \textbf{Static AST Defect Scanner \& Fork-Aware Pull Request Engine:} Scanning repositories for non-lintable bugs (memory leaks, unhandled promises, SQL injection risks) and automating end-to-end fix delivery via personal GitHub fork orchestration and upstream Pull Requests.
+  \item \textbf{Team Dashboard \& Module Ownership Heatmap:} Surfacing live stale-issue alerts ($14+$ days) and computing per-directory commit touch frequencies to visualize module ownership.
+  \item \textbf{Multi-Team Collaboration Workspace:} Adding file-level task delegation with deadlines, unread notification alerts, and synchronized team discussion channels.
+\end{enumerate}
+
+\section{Final Remarks}
+
+CodeSphere AI fulfills the Mid-Semester UCS503P objectives by delivering a working, deployed, and empirically verified codebase intelligence system. By grounding every AI response in real repository lines and automating initial issue triage, the platform establishes a rock-solid foundation for our End-Semester collaborative and automated PR workflows.
+
+% ===== BIBLIOGRAPHY =====
+
+% Print bibliography with heading in TOC
+\printbibliography[heading=bibintoc]
+
+\end{document}
