@@ -47,16 +47,12 @@ ucs503p-proposal/
 │       └── fig_pr_engine.png
 │
 ├── mst/                      <-- Mid-Semester Evaluation Deliverables (MST)
-│   ├── codesphere-ai-project-report.pdf
-│   ├── codesphere-ai-project-report.tex
-│   ├── MST Report.pdf
-│   └── MST Report.tex
+│   ├── MST Report.pdf        <-- Mid-Semester Project Report
+│   └── MST Report.tex        <-- Mid-Semester Report LaTeX Source
 │
-├── proposal/                 <-- Initial & Updated Project Proposals
-│   ├── codesphere-ai-proposal.pdf
-│   ├── codesphere-ai-proposal.tex
-│   ├── codesphere_ai_updated.pdf
-│   └── codesphere-ai-proposal-updated.tex
+├── proposal/                 <-- Project Proposal Deliverables
+│   ├── Proposal.pdf          <-- Course Project Proposal
+│   └── Proposal.tex          <-- Project Proposal LaTeX Source
 │
 └── project/                  <-- Full Next.js Application Source Code
     ├── app/                  <-- Next.js 14 App Router (Pages, UI Components, API Routes)
@@ -81,8 +77,8 @@ ucs503p-proposal/
 | :--- | :--- | :--- | :--- |
 | **Final Report (EST)** | [📄 **`final/Final Report.pdf`**](final/Final%20Report.pdf) | [📝 **`final/Final Report.tex`**](final/Final%20Report.tex) | 20 pages, 4 chapters, 8 real application figures, database schema, quantitative performance metrics. |
 | **Root Copy (EST)** | [📄 **`Final Report.pdf`**](Final%20Report.pdf) | [📝 **`Final Report.tex`**](Final%20Report.tex) | 1-click access at root for evaluation grading. |
-| **Mid-Sem Report (MST)** | [📄 **`mst/MST Report.pdf`**](mst/codesphere-ai-project-report.pdf) | [📝 **`mst/MST Report.tex`**](mst/codesphere-ai-project-report.tex) | Mid-semester evaluation milestone report. |
-| **Initial Proposal** | [📄 **`proposal/Proposal.pdf`**](proposal/codesphere-ai-proposal.pdf) | [📝 **`proposal/Proposal.tex`**](proposal/codesphere-ai-proposal.tex) | Original course project proposal. |
+| **Mid-Sem Report (MST)** | [📄 **`mst/MST Report.pdf`**](mst/MST%20Report.pdf) | [📝 **`mst/MST Report.tex`**](mst/MST%20Report.tex) | Mid-semester evaluation milestone report. |
+| **Initial Proposal** | [📄 **`proposal/Proposal.pdf`**](proposal/Proposal.pdf) | [📝 **`proposal/Proposal.tex`**](proposal/Proposal.tex) | Original course project proposal. |
 
 ---
 
