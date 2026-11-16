@@ -1,0 +1,171 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{microtype}
+\usepackage{titlesec}
+\usepackage{listings}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue!70!black,
+    citecolor=blue!70!black,
+    urlcolor=blue!70!black
+}
+
+\setlist[itemize]{noitemsep, topsep=3pt, leftmargin=1.5em}
+\setlist[enumerate]{noitemsep, topsep=3pt, leftmargin=1.5em}
+
+\titleformat{\section}{\large\bfseries}{\thesection}{1em}{}[\vspace{-2pt}\rule{\textwidth}{0.4pt}]
+\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection}{1em}{}
+
+\begin{document}
+
+\begin{center}
+    {\LARGE \textbf{CodeSphere AI: An AI-Augmented Software Engineering Collaboration Platform}}\\[8pt]
+    {\large Project Report \& Specification for UCS503P}\\[4pt]
+    {\normalsize Submitted to: \textbf{Ms. Paramveer Sidhu}}\\[2pt]
+    {\normalsize \textbf{Thapar Institute of Engineering and Technology}}\\[8pt]
+    {\normalsize Sarthak Soni, 3C11\footnote{Roll No: 1024030061, Email: \texttt{ssoni1\_be24@thapar.edu}} \quad\quad Ayush Bansal, 3C11\footnote{Roll No: 1024030059, Email: \texttt{abansal9\_be24@thapar.edu}}}\\[6pt]
+    {\normalsize \textit{Academic Term 2026}}
+\end{center}
+
+\vspace{10pt}
+
+\section{Higher-Order Goal \hfill \normalfont\small\textit{... secondary framing}}
+This project addresses software engineering productivity bottlenecks by minimizing the cognitive latency developers expend understanding unfamiliar codebases, triaging issues, locating defects, and coordinating feature delivery across teams. Rather than treating AI as an isolated text generator, CodeSphere AI integrates \textbf{verified, retrieval-grounded codebase intelligence} directly into the developer workflow. The immediate engineering objective translates faster, evidence-backed software decisions into a measurable, deployable cloud application backed by PostgreSQL \texttt{pgvector}, local ONNX neural embeddings, AST-driven bug scanners, and fork-aware automated GitHub PR generation.
+
+\section{Time-to-Value \hfill \normalfont\small\textit{... primary heuristic}}
+\begin{itemize}
+    \item \textbf{Rapid Incremental Delivery:} We prototyped and deployed the core retrieval-augmented pipeline on a real-world multi-hundred-file open-source codebase (\texttt{AOSSIE-Org/DebateAI}), validating performance across 700+ indexed chunks in Go and TypeScript.
+    \item \textbf{Zero-Friction Release Pipeline:} Automated CI/CD builds on push with Next.js 14 dynamic route validation, unit testing, and immediate production deployment on Vercel.
+    \item \textbf{Evidence-Based Iteration:} Real-time feedback gathered from live developer queries, progressively eliminating hallucinated citations, refining AST chunk boundaries, and automating issue resolution.
+\end{itemize}
+
+\section{Problem Statement}
+Third-year computer science teams and early-career software engineers routinely encounter friction in procedural, non-creative engineering overhead:
+\begin{itemize}
+    \item \textbf{Codebase Onboarding Overhead:} New contributors take days to locate architectural entry points, data models, and authentication middleware in large multi-directory repositories.
+    \item \textbf{AI Hallucination in Developer Tooling:} Conventional LLM assistants fabricate non-existent API signatures, hallucinate imports, and provide generic answers detached from exact repository lines.
+    \item \textbf{Backlog Triage Fatigue:} Issues accumulate without automated categorization, root-cause identification, or suggested patches, leading to stale issue debt.
+    \item \textbf{Contribution Permission Barriers:} Contributors to public upstream repositories lack direct push access, making automated bug-fixing bots brittle unless they natively orchestrate personal GitHub forks.
+    \item \textbf{Siloed Module Knowledge:} Teams lack visibility into module ownership and commit touch velocity, causing bottlenecks when critical files require modification.
+\end{itemize}
+
+\section{Implemented Solution \hfill \normalfont\small\textit{... software architecture}}
+
+\subsection{System Overview}
+CodeSphere AI is a full-stack, cloud-deployed engineering collaboration platform that bridges GitHub repositories with local dense neural embeddings and Gemini reasoning models:
+\begin{enumerate}
+    \item \textbf{GitHub OAuth \& Identity Layer:} Secure GitHub OAuth integration with session management, requesting minimal permissions while enabling private and public repository indexing.
+    \item \textbf{Local In-Process Embedding Pipeline:} Replaces costly external embedding APIs with \texttt{@xenova/transformers} running an ONNX runtime of \texttt{all-MiniLM-L6-v2} (384-dimensional dense vectors) natively inside Node.js.
+    \item \textbf{Progressive Multi-Pass Deep Indexer:} An asynchronous pipeline that indexes large codebases in batches (20 files / 70 chunks per pass), with pause/resume state management to bypass cloud serverless execution timeouts.
+    \item \textbf{Strict Grounded Copilot:} Codebase Q\&A engine that dynamically retrieves the top-$k$ chunks from \texttt{pgvector}, enforces explicit chunk citations (\texttt{[CITED: Chunk X]}), suppresses false citations on negative queries, and generates hyperlinked GitHub line citations.
+    \item \textbf{Static AST Bug \& Leak Scanner:} Static AST analysis detecting event listener memory leaks, unhandled asynchronous promises, SQL injection vectors, and ReDoS risks across repository files.
+    \item \textbf{Fork-Aware Automated PR Engine:} Automatically detects push permissions; if the user lacks write access, it dynamically creates a personal GitHub fork, pushes a fix branch, and opens an upstream Pull Request.
+    \item \textbf{HMAC-Verified GitHub Webhook Bot:} Listens for GitHub \texttt{issues} events, verifies payload integrity via HMAC SHA-256 signatures, and posts grounded root-cause triage comments and labels.
+    \item \textbf{Team Workspace \& Module Ownership Heatmap:} Visualizes commit touch frequency across codebase directories to identify module maintainers, while synchronizing team task assignments and discussion feeds.
+    \item \textbf{Global Interactive Header Command Palette:} A GitHub-styled top header search bar with keyboard shortcuts (\texttt{/} and \texttt{Cmd+K}) offering instant fuzzy repository filtering and deep navigation.
+\end{enumerate}
+
+\subsection{Core Operational Workflow}
+\begin{enumerate}
+    \item A team lead connects a repository; the local ONNX engine progressively chunks files along language syntax boundaries and inserts vectors into Supabase PostgreSQL \texttt{pgvector}.
+    \item Contributor asks architectural questions in Copilot; the hybrid retrieval engine pulls relevant chunks, while the strict citation filter ensures zero hallucinated source attributions.
+    \item Contributor inspects the Issue Health tab; the AST scanner flags memory leaks and stale issues, providing a ``Deliver Solution'' action.
+    \item Clicking ``Deliver Solution'' triggers the fork-aware generator: CodeSphere creates a branch on the user's fork, commits the patch, and opens an upstream PR directly on GitHub.
+    \item When external issues arrive on GitHub, the HMAC webhook automatically labels the issue and comments with code-grounded diagnostic guidance within 3 seconds.
+\end{enumerate}
+
+\section{Solution Approach \& Technical Implementation}
+
+\subsection{Local Vector Embeddings and Chunking}
+Rather than depending on proprietary cloud embedding APIs that impose quota limitations, CodeSphere AI packages a local neural embedding pipeline:
+\begin{itemize}
+    \item \textbf{Model:} \texttt{all-MiniLM-L6-v2} compiled to ONNX, producing 384-dimensional vector embeddings cached locally.
+    \item \textbf{Syntax-Aware AST Chunking:} Recognizes language construct boundaries across TypeScript/JavaScript (\texttt{export}, \texttt{class}, \texttt{function}), Go (\texttt{func}), Rust (\texttt{fn}), and Python (\texttt{def}), with intelligent stub merging ($<8$ lines merged into parent blocks) to prevent 1-line package header pollution.
+    \item \textbf{Hybrid Cosine Retrieval:} Combines exact file-path pattern matching, penalization of non-code template files, and dense vector distance:
+    \[
+    \text{Distance}(q, c) = (e_q \cdot e_c) + \text{Penalty}_{\text{non-code}} + \text{Penalty}_{\text{stub}}
+    \]
+\end{itemize}
+
+\subsection{Grounding Defense \& Strict Attribution Logic}
+To prevent LLMs from citing irrelevant files or hallucinating sources when answering negative queries (e.g., verifying whether a variable or library exists), CodeSphere enforces a three-tier citation filter:
+\begin{enumerate}
+    \item \textbf{Negative Match Suppression:} If the response indicates absence (e.g., ``not found anywhere'', ``yields no occurrences''), source citations are strictly set to $\emptyset$.
+    \item \textbf{Explicit Chunk Tagging:} The LLM generates \texttt{[CITED: Chunk X]} tags. Only chunks validated by the model are hyperlinked to GitHub line ranges (\texttt{blob/main/path\#Lstart-Lend}).
+    \item \textbf{Context Separation:} Open-source organizational background (e.g., GSoC participation, community history) is explicitly delineated from concrete code files.
+\end{enumerate}
+
+\subsection{Automated Fork-Aware PR Generation Architecture}
+Handling external open-source contributions requires automated fork management:
+\begin{enumerate}
+    \item \textbf{Permission Check:} Checks GitHub repository permissions (\texttt{repo.permissions.push}).
+    \item \textbf{Fork Orchestration:} If write access is denied, CodeSphere queries the authenticated user's account for an existing fork. If none exists, it triggers \texttt{POST /repos/\{owner\}/\{repo\}/forks}.
+    \item \textbf{Git Tree Modification:} Creates a branch on the fork (\texttt{fix/codesphere-issue-\{num\}}), writes the verified patch, and issues an upstream pull request (\texttt{head: \{user\}:\{branch\}}, \texttt{base: main}) referencing the target issue.
+\end{enumerate}
+
+\section{Evaluation Criteria \& Empirical Validation}
+
+\subsection{Primary Evaluation Metric: Grounding Reliability}
+\begin{itemize}
+    \item \textbf{Mandatory Benchmark:} $\ge 85.0\%$ Grounding Reliability rate on code-level architectural queries across indexed files.
+    \item \textbf{Automated In-App Probe Suite:} Built-in verification modal executes 20 automated AST probes on the live repository, testing file location, symbol definition, and line citation accuracy.
+    \item \textbf{Remediation Gate:} If a repository falls below $85\%$, the UI displays an actionable multi-step remediation path (AST chunking check, progressive deep index execution).
+    \item \textbf{Audit Export:} A single-click ``Copy Report'' feature exports markdown compliance logs for academic and engineering peer review.
+\end{itemize}
+
+\subsection{Secondary Evaluation Metrics}
+\begin{itemize}
+    \item \textbf{Triage Response Latency:} Webhook processing time from GitHub event emission to bot comment publication: \textbf{$<3.2$ seconds} (well below the 30-second target).
+    \item \textbf{Static Code Defect Detection:} Successfully identifies real-world memory leaks (uncleaned timers, listeners) and asynchronous anti-patterns without executing untrusted code.
+    \item \textbf{Build Stability:} 100\% clean Next.js 14 builds with zero TypeScript/lint errors across 21 static and dynamic endpoints.
+\end{itemize}
+
+\section{Technology Stack \& Engine Availability}
+\begin{itemize}
+    \item \textbf{Frontend \& API Gateway:} Next.js 14 (App Router), React 18, GitHub Dark design system, Octicon SVG vector assets.
+    \item \textbf{Database \& Vector Store:} PostgreSQL with \texttt{pgvector} extension hosted on Supabase; cosine distance indexing ($<=>$).
+    \item \textbf{Machine Learning \& Reasoning:} In-browser/Node.js ONNX runtime (\texttt{@xenova/transformers}) for embeddings; Google Gemini 1.5 Flash-Lite for grounded response synthesis and issue triage.
+    \item \textbf{GitHub Integration:} Octokit REST/GraphQL API with personal access tokens and HMAC SHA-256 webhook verification.
+    \item \textbf{Deployment:} Vercel serverless edge deployment with continuous Git synchronization.
+\end{itemize}
+
+\section{Deliverables: Proposed vs. Delivered}
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Component} & \textbf{Original Proposal} & \textbf{Final Delivered Implementation} \\
+\midrule
+Authentication & Basic GitHub OAuth & OAuth with session cookies, profile sync, and permission check \\
+Vector Embeddings & External Cloud Embedding API & \textbf{Local In-Process ONNX} (\texttt{all-MiniLM-L6-v2}), 0 API cost \\
+Repository Indexing & Single-pass indexing for 1 repo & \textbf{Multi-Pass Progressive Deep Indexer} (700+ chunks, Go/TS) \\
+Grounding Verification & Manual answer-key comparison & \textbf{Automated 20-probe in-app benchmark} ($\ge 85\%$ strict gate) \\
+Issue Triage & Basic comment on new issue & \textbf{HMAC-verified bot} with labels, summaries, and code citations \\
+PR Generation & Not in initial scope & \textbf{Fork-aware 1-click PR engine} with automated upstream delivery \\
+Bug Detection & Not in initial scope & \textbf{AST Static Scanner} (memory leaks, SQLi, async bugs) \\
+UI / Command Search & Standard web dashboard & \textbf{Global Command Palette} (\texttt{/} and \texttt{Cmd+K}) with live fuzzy search \\
+Team Collaboration & Basic staleness alerts & \textbf{Module Ownership Heatmap}, tasks, deadlines, and discussion \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Risks, Mitigations \& Defenses}
+\begin{itemize}
+    \item \textbf{API Cost \& Quota Exhaustion:} Mitigated by replacing cloud embedding APIs with in-process local ONNX neural embeddings, keeping operational cost at \$0.
+    \item \textbf{AI Hallucination:} Mitigated by multi-pass pgvector retrieval, strict \texttt{[CITED: Chunk X]} parsing, and suppression of citations on negative assertions.
+    \item \textbf{Serverless Timeouts on Large Repositories:} Mitigated by the Progressive Deep Indexer, which processes code in micro-batches and maintains state across invocations.
+    \item \textbf{Upstream Permission Denials:} Mitigated by automated fork creation and cross-repository branch delivery.
+\end{itemize}
+
+\section{Conclusion}
+CodeSphere AI has evolved from an initial proposal into a high-performance, deployable software engineering collaboration system. By combining local neural embeddings, strict anti-hallucination citation mechanics, an automated $\ge 85\%$ grounding benchmark suite, AST static bug detection, and fork-aware PR delivery, the platform fulfills all UCS503P course criteria with production-level software rigor.
+
+\end{document}
